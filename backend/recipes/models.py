@@ -8,7 +8,9 @@ from tags.models import Tag
 
 class Recipe(models.Model):
     tags = models.ManyToManyField(Tag, related_name='recipes')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientInRecipe',
@@ -35,4 +37,5 @@ class IngredientInRecipe(models.Model):
         unique_together = ('ingredient', 'recipe')
 
     def __str__(self):
+        # Проверить в админке
         return f'{self.ingredient.name} в {self.recipe.title}'
