@@ -7,7 +7,7 @@ from .serializers import IngredientSerializer
 class IngredientViewSet(ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    http_method_names = ['get']
+    http_method_names = ['get']  # Настроить фильтрацию и сортирование
     # filter_fields = ('name',)
     # search_fields = ('name',)
     # ordering_fields = ('name',)
