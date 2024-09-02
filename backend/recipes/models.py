@@ -39,3 +39,19 @@ class IngredientInRecipe(models.Model):
     def __str__(self):
         # Проверить в админке
         return f'{self.ingredient.name} в {self.recipe.title}'
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, related_name='favorites'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='favorited_by'
+    )
+
+    class Meta:
+        unique_together = ('user', 'recipe')
+
+    def __str__(self):
+        return f"{self.user} - {self.recipe}"
