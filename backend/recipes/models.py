@@ -69,6 +69,10 @@ class Recipe(models.Model):
         help_text="Время приготовления (в минутах)"
     )
 
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
     def __str__(self):
         return self.name
 
