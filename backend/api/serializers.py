@@ -5,10 +5,13 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
-from recipes.models import (Ingredient,
+from recipes.models import (Favorite,
+                            Ingredient,
                             IngredientInRecipe,
                             Recipe,
+                            ShoppingCart,
                             Subscription,
                             Tag
                             )
@@ -35,9 +38,12 @@ User = get_user_model()
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
-    first_name = serializers.CharField(required=True)
-    last_name = serializers.CharField(required=True)
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    first_name = serializers.CharField(required=True, max_length=150)
+    last_name = serializers.CharField(required=True, max_length=150)
 
     class Meta:
         model = User
@@ -108,6 +114,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -122,6 +130,37 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance.author).data
 
         return representation
+
+    def validate(self, data):
+        ingredients = data.get('ingredientinrecipe_set', [])
+
+        if not ingredients and not self.instance:
+            raise serializers.ValidationError(
+                {'ingredients': 'Поле не должно быть пустым.'}
+            )
+
+        if ingredients:
+            ingredient_ids = [ingredient['ingredient']['id']
+                              for ingredient in ingredients]
+            if len(ingredient_ids) != len(set(ingredient_ids)):
+                raise serializers.ValidationError(
+                    {'ingredients': 'Список ингредиентов содержит дубликаты.'}
+                )
+        tags = data.get('tags', [])
+
+        if not tags and not self.instance:
+            raise serializers.ValidationError(
+                {'tags': 'Поле не должно быть пустым.'}
+            )
+
+        if tags:
+            tag_names = [tag.name for tag in tags]
+            if len(tag_names) != len(set(tag_names)):
+                raise serializers.ValidationError(
+                    {'tags': 'Список тегов содержит дубликаты.'}
+                )
+
+        return data
 
     def create(self, validated_data):
 
@@ -182,6 +221,19 @@ class RecipeSerializer(serializers.ModelSerializer):
                     )
 
         return instance
+
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Favorite.objects.filter(user=user, recipe=obj).exists()
+        return False
+
+    def get_is_in_shopping_cart(self, obj):
+        # Проверить код.
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+        return False
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

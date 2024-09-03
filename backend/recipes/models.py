@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -54,7 +53,7 @@ class Tag(models.Model):
 class Recipe(models.Model):
     tags = models.ManyToManyField(Tag, related_name='recipes')
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+        CustomUser, on_delete=models.CASCADE
     )
     ingredients = models.ManyToManyField(
         Ingredient,
@@ -92,7 +91,7 @@ class IngredientInRecipe(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        CustomUser,
         on_delete=models.CASCADE, related_name='favorites'
     )
     recipe = models.ForeignKey(
@@ -104,3 +103,19 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.recipe}"
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = ('user', 'recipe')
+
+        def __str__(self):
+            return f'{self.user} - {self.recipe}'

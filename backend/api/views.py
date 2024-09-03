@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
@@ -7,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from api.filters import RecipeFilter
 from recipes.models import Favorite, Ingredient, Recipe, Subscription, Tag
 from .serializers import (
     AvatarSerializer,
@@ -48,14 +50,6 @@ class UserSelfView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
-    # def patch(self, request):
-    #     serializer = UserSerializer(
-    #         request.user, data=request.data, partial=True)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class UserAvatarView(APIView):
     permission_classes = [IsAuthenticated]
@@ -64,6 +58,11 @@ class UserAvatarView(APIView):
         user = request.user
         serializer = AvatarSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        if 'avatar' not in request.data:
+            return Response(
+                {'avatar': 'Это поле обязательно для заполнения.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         serializer.save()
 
         return Response({
@@ -93,17 +92,18 @@ class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     http_method_names = ['get']
+    pagination_class = None
+
     # Разобраться с поиском и фильтрацией
-    # filter_backends = (filters.SearchFilter,)
-    # search_fields = ('^slug',)
-    lookup_field = 'slug'
 
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = [IsAuthenticated]
-    # http_method_names = ['get', 'post', 'patch', 'delete']
+    # permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -132,7 +132,7 @@ class RecipeViewSet(ModelViewSet):
 class IngredientViewSet(ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    http_method_names = ['get']  # Настроить фильтрацию и сортирование
-    # filter_fields = ('name',)
-    # search_fields = ('name',)
-    # ordering_fields = ('name',)
+    http_method_names = ['get']
+    filter_backends = (DjangoFilterBackend,)
+    pagination_class = None
+    filterset_fields = ('name',)
