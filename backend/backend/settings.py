@@ -30,10 +30,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
 
-    'users.apps.UsersConfig',
+    'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
-    'ingredients.apps.IngredientsConfig',
-    'tags.apps.TagsConfig',
 ]
 
 MIDDLEWARE = [
@@ -135,7 +133,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'recipes.CustomUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
