@@ -1,11 +1,11 @@
-from rest_framework.serializers import ModelSerializer
+# from rest_framework.serializers import ModelSerializer
 
-from .models import Tag
+# from .models import Tag
 
 
-class TagSerializer(ModelSerializer):
-    # Настроить валидатор ^[-a-zA-Z0-9_]+$ для тегов
+# class TagSerializer(ModelSerializer):
+#     # Настроить валидатор ^[-a-zA-Z0-9_]+$ для тегов
 
-    class Meta:
-        model = Tag
-        fields = ('id', 'name', 'slug')
+#     class Meta:
+#         model = Tag
+#         fields = ('id', 'name', 'slug')
