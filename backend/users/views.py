@@ -1,12 +1,15 @@
 from django.contrib.auth import get_user_model
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from users.models import Subscription
 from .serializers import (
     AvatarSerializer,
+    SubscriptionSerializer,
     UserRegistrationSerializer,
     UserSerializer
 )
@@ -66,3 +69,16 @@ class UserAvatarView(APIView):
         user = request.user
         user.avatar.delete(save=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionListView(ListAPIView):
+    serializer_class = SubscriptionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

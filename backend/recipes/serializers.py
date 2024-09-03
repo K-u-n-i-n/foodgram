@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
-from users.serializers import UserSerializer
-from tags.models import Tag
 from core.serializers import Base64ImageField
 from ingredients.models import Ingredient
+from tags.models import Tag
 from tags.serializers import TagSerializer
+from users.serializers import UserSerializer
 from .models import IngredientInRecipe, Recipe
 
 

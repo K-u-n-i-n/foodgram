@@ -1,32 +1,13 @@
-# import base64
-# import imghdr
-# import uuid
-
 from django.contrib.auth import get_user_model
-# from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from core.serializers import Base64ImageField
+from recipes.models import Recipe
+from recipes.serializers import RecipeSerializer
+from users.models import Subscription
 
 
 User = get_user_model()
-
-
-# class Base64ImageField(serializers.ImageField):
-#     def to_internal_value(self, data):
-#         if isinstance(data, str) and data.startswith('data:image'):
-#             format, imgstr = data.split(';base64,')
-#             ext = format.split('/')[-1]
-#             img_data = base64.b64decode(imgstr)
-
-#             file_name = f"{uuid.uuid4()}.{ext}"
-
-#             if not imghdr.what(None, img_data):
-#                 raise serializers.ValidationError('Неверное изображение')
-
-#             data = ContentFile(img_data, name=file_name)
-
-#         return super().to_internal_value(data)
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -68,3 +49,24 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar']
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    recipes = RecipeSerializer(
+        many=True, read_only=True, source='author.recipe_set'
+    )
+    recipes_count = serializers.SerializerMethodField()
+    avatar = AvatarSerializer(read_only=True)
+
+    class Meta:
+        model = Subscription
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count', 'avatar'
+        )
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.author).count()
+
+    # def get_avatar(self, obj):
+    #     return obj.author.profile.avatar.url if hasattr(obj.author, 'profile') else None
