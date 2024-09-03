@@ -1,13 +1,13 @@
-from rest_framework.viewsets import ModelViewSet
+# from rest_framework.viewsets import ModelViewSet
 
-from .models import Ingredient
-from .serializers import IngredientSerializer
+# from .models import Ingredient
+# from .serializers import IngredientSerializer
 
 
-class IngredientViewSet(ModelViewSet):
-    queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
-    http_method_names = ['get']  # Настроить фильтрацию и сортирование
-    # filter_fields = ('name',)
-    # search_fields = ('name',)
-    # ordering_fields = ('name',)
+# class IngredientViewSet(ModelViewSet):
+#     queryset = Ingredient.objects.all()
+#     serializer_class = IngredientSerializer
+#     http_method_names = ['get']  # Настроить фильтрацию и сортирование
+#     # filter_fields = ('name',)
+#     # search_fields = ('name',)
+#     # ordering_fields = ('name',)
