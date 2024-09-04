@@ -117,6 +117,19 @@ class RecipeViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def partial_update(self, request, *args, **kwargs):
+        required_fields = [
+            'ingredients', 'tags', 'name', 'text', 'cooking_time'
+        ]
+        for field in required_fields:
+            if field not in request.data:
+                return Response(
+                    {field: 'Это поле является обязательным.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        return super().partial_update(request, *args, **kwargs)
+
     @action(
         detail=True,
         methods=['post'],
