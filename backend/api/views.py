@@ -2,14 +2,23 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from api.filters import RecipeFilter
-from recipes.models import Favorite, Ingredient, Recipe, Subscription, Tag
+from api.permissions import IsAuthorOrAdmin
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    ShoppingCart,
+    Subscription,
+    Tag
+)
 from .serializers import (
     AvatarSerializer,
     FavoriteSerializer,
@@ -100,7 +109,7 @@ class TagViewSet(ModelViewSet):
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrAdmin]
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -108,7 +117,11 @@ class RecipeViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['post'])
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
+    )
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -117,11 +130,26 @@ class RecipeViewSet(ModelViewSet):
         )
 
         if not created:
-            favorite.delete()
-            return Response(
-                {'status': 'recipe removed from favorites'},
-                status=status.HTTP_204_NO_CONTENT
+            raise ValidationError({'detail': 'Рецепт уже есть в избранном'})
+
+        recipe_data = FavoriteSerializer(
+            recipe, context={'request': request}).data
+
+        return Response(recipe_data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True,
+            methods=['post'],
+            permission_classes=[IsAuthenticated]
             )
+    def shopping_cart(self, request, pk=None):
+        recipe = self.get_object()
+        user = request.user
+        shopping_cart, created = ShoppingCart.objects.get_or_create(
+            user=user, recipe=recipe)
+
+        if not created:
+            raise ValidationError(
+                {'detail': 'Рецепт уже находится в корзине покупок'})
 
         recipe_data = FavoriteSerializer(
             recipe, context={'request': request}).data
