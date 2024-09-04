@@ -30,6 +30,9 @@ class Subscription(models.Model):
         CustomUser, related_name='subscribers', on_delete=models.CASCADE
     )
 
+    class Meta:
+        unique_together = ('user', 'author')
+
     def __str__(self):
         return f'{self.user} subscribed to {self.author}'
 
