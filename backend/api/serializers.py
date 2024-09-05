@@ -11,6 +11,7 @@ from recipes.models import (Favorite,
                             Ingredient,
                             IngredientInRecipe,
                             Recipe,
+                            ShoppingCart,
                             Subscription,
                             Tag
                             )
@@ -104,7 +105,8 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         if recipes_limit is not None:
             recipes = recipes[:recipes_limit]
 
-        return RecipeShortSerializer(recipes, many=True, context=self.context).data
+        return RecipeShortSerializer(
+            recipes, many=True, context=self.context).data
 
     def get_recipes_count(self, obj):
         # Возвращаем общее количество рецептов у автора
@@ -268,9 +270,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_in_shopping_cart(self, obj):
         # Проверить код.
-        # user = self.context['request'].user
-        # if user.is_authenticated:
-        #     return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
         return False
 
 

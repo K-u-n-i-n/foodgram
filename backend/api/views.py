@@ -60,27 +60,41 @@ class UserViewSet(ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=['post', 'delete'],
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, pk=None):
-        user = self.get_object()
+        target_user = self.get_object()
         current_user = request.user
 
-        if user == current_user:
+        if request.method == 'DELETE':
+            subscription = Subscription.objects.filter(
+                user=current_user, author=target_user
+            ).first()
+
+            if not subscription:
+                return Response(
+                    {"detail": "Подписка не найдена."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        if target_user == current_user:
             return Response(
                 {"detail": "Нельзя подписаться на самого себя."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if Subscription.objects.filter(
-                user=current_user, author=user).exists():
+                user=current_user, author=target_user).exists():
             return Response(
                 {"detail": "Вы уже подписаны на этого пользователя."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        Subscription.objects.create(user=current_user, author=user)
+        Subscription.objects.create(user=current_user, author=target_user)
 
         recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit is not None:
@@ -92,7 +106,8 @@ class UserViewSet(ModelViewSet):
         context = self.get_serializer_context()
         context['recipes_limit'] = recipes_limit
 
-        user_data = UserSubscriptionSerializer(user, context=context).data
+        user_data = UserSubscriptionSerializer(
+            target_user, context=context).data
         return Response(user_data, status=status.HTTP_201_CREATED)
 
     @action(
