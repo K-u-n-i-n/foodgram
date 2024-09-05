@@ -8,7 +8,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user'),
 router.register(r'tags', views.TagViewSet),
-router.register(r'recipes', views.RecipeViewSet),
+router.register(r'recipes', views.RecipeViewSet, basename='recipe'),
 router.register(r'ingredients', views.IngredientViewSet),
 
 
