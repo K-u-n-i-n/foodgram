@@ -218,42 +218,77 @@ class RecipeViewSet(ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=['post', 'delete'],
         permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
-        favorite, created = Favorite.objects.get_or_create(
-            user=user, recipe=recipe
-        )
 
-        if not created:
-            raise ValidationError({'detail': 'Рецепт уже есть в избранном'})
-
-        recipe_data = FavoriteSerializer(
-            recipe, context={'request': request}).data
-
-        return Response(recipe_data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True,
-            methods=['post'],
-            permission_classes=[IsAuthenticated]
+        if request.method == 'POST':
+            favorite, created = Favorite.objects.get_or_create(
+                user=user, recipe=recipe
             )
+
+            if not created:
+                raise ValidationError(
+                    {'detail': 'Рецепт уже есть в избранном'}
+                )
+
+            recipe_data = FavoriteSerializer(
+                recipe, context={'request': request}
+            ).data
+            return Response(recipe_data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            favorite = Favorite.objects.filter(
+                user=user, recipe=recipe).first()
+
+            if not favorite:
+                return Response(
+                    {'detail': 'Рецепт не найден в избранном'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
-        shopping_cart, created = ShoppingCart.objects.get_or_create(
-            user=user, recipe=recipe)
 
-        if not created:
-            raise ValidationError(
-                {'detail': 'Рецепт уже находится в корзине покупок'})
+        if request.method == 'POST':
+            shopping_cart, created = ShoppingCart.objects.get_or_create(
+                user=user, recipe=recipe
+            )
 
-        recipe_data = FavoriteSerializer(
-            recipe, context={'request': request}).data
+            if not created:
+                raise ValidationError(
+                    {'detail': 'Рецепт уже находится в корзине покупок'}
+                )
 
-        return Response(recipe_data, status=status.HTTP_201_CREATED)
+            recipe_data = FavoriteSerializer(
+                recipe, context={'request': request}
+            ).data
+            return Response(recipe_data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            shopping_cart = ShoppingCart.objects.filter(
+                user=user, recipe=recipe).first()
+
+            if not shopping_cart:
+                return Response(
+                    {'detail': 'Рецепт не найден в корзине покупок'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            shopping_cart.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
