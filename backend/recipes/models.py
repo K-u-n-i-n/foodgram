@@ -14,7 +14,9 @@ class CustomUser(AbstractUser):
         'password'
     )
 
-    avatar = models.ImageField(upload_to='users/', blank=True, null=True)
+    avatar = models.ImageField(
+        upload_to='users/', blank=True, null=True, verbose_name='Аватар'
+    )
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -32,6 +34,8 @@ class Subscription(models.Model):
 
     class Meta:
         unique_together = ('user', 'author')
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
 
     def __str__(self):
         return f'{self.user} subscribed to {self.author}'
@@ -41,6 +45,10 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=128, blank=False, null=False)
     measurement_unit = models.CharField(max_length=64, blank=False, null=False)
 
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+
     def __str__(self):
         return self.name
 
@@ -48,6 +56,10 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=32)
     slug = models.SlugField(max_length=32, unique=True)
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
 
     def __str__(self):
         return self.name
@@ -88,7 +100,6 @@ class IngredientInRecipe(models.Model):
         unique_together = ('ingredient', 'recipe')
 
     def __str__(self):
-        # Проверить в админке
         return f'{self.ingredient.name} в {self.recipe.title}'
 
 
@@ -103,6 +114,8 @@ class Favorite(models.Model):
 
     class Meta:
         unique_together = ('user', 'recipe')
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные рецепты'
 
     def __str__(self):
         return f"{self.user} - {self.recipe}"
@@ -119,6 +132,8 @@ class ShoppingCart(models.Model):
 
     class Meta:
         unique_together = ('user', 'recipe')
+        verbose_name = 'Корзина'
+        verbose_name_plural = 'Корзины'
 
         def __str__(self):
             return f'{self.user} - {self.recipe}'

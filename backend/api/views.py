@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from dotenv import load_dotenv, find_dotenv
-from rest_framework import status
+from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, ParseError
 from rest_framework.permissions import (AllowAny,
@@ -361,6 +361,7 @@ class IngredientViewSet(ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     http_method_names = ['get']
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     pagination_class = None
     filterset_fields = ('name',)
+    search_fields = ('^name',)
