@@ -11,9 +11,11 @@ class Command(BaseCommand):
     help = 'Загрузка ингредиентов в базу данных из CSV-файла'
 
     def handle(self, *args, **kwargs):
-        file_path = os.path.join(
-            settings.BASE_DIR, '..', 'data', 'ingredients.csv'
-        )
+        # file_path = os.path.join(
+        #     settings.BASE_DIR, '..', 'data', 'ingredients.csv'
+        # )
+        # Используем абсолютный путь к файлу в контейнере
+        file_path = os.path.join('/app/data', 'ingredients.csv')
 
         try:
             with open(file_path, mode='r', encoding='utf-8') as file:
