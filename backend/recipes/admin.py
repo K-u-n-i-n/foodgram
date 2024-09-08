@@ -115,7 +115,7 @@ class RecipeAdmin(admin.ModelAdmin):
         return obj.text if len(obj.text) < 100 else obj.text[:100] + '...'
 
     def get_favorites_count(self, obj):
-        return obj.favorites.count()
+        return obj.favorited_by.count()
 
     get_favorites_count.short_description = 'Количество добавлений в избранное'
 

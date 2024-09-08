@@ -139,7 +139,7 @@ class IngredientInRecipe(models.Model):
         unique_together = ('ingredient', 'recipe')
 
     def __str__(self):
-        return f'{self.ingredient.name} в {self.recipe.title}'
+        return f'{self.ingredient.name} в {self.recipe.name}'
 
 
 class Favorite(models.Model):
