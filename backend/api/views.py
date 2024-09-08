@@ -216,6 +216,13 @@ class RecipeViewSet(ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, partial=True, **kwargs)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user       
+        if 'is_favorited' in self.request.query_params:
+            queryset = queryset.filter(favorited_by__user=user)
+        return queryset
+
     @action(
         detail=True,
         methods=['post', 'delete'],

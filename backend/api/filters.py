@@ -10,7 +10,14 @@ class RecipeFilter(django_filters.FilterSet):
         queryset=Tag.objects.all(),
         conjoined=False
     )
+    is_favorited = django_filters.BooleanFilter(method='filter_is_favorited')
+
+    def filter_is_favorited(self, queryset, name, value):
+        user = self.request.user
+        if value:
+            return queryset.filter(favorited_by__user=user)
+        return queryset
 
     class Meta:
         model = Recipe
-        fields = ['author', 'tags']
+        fields = ['author', 'tags', 'is_favorited']
