@@ -227,6 +227,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredientinrecipe_set')
         tags_data = validated_data.pop('tags', None)
 
+        if 'image' in validated_data:
+            instance.image = validated_data.get('image', instance.image)
+
         instance.name = validated_data.get('name', instance.name)
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time)
