@@ -7,12 +7,12 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from api.mixins import IsSubscribedMixin
 from recipes.models import (Favorite,
                             Ingredient,
                             IngredientInRecipe,
                             Recipe,
                             ShoppingCart,
-                            Subscription,
                             Tag
                             )
 
@@ -58,7 +58,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer, IsSubscribedMixin):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -68,10 +68,6 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name', 'is_subscribed', 'avatar'
         )
 
-    def get_is_subscribed(self, obj):
-        # Проверить наличие подписки в другой таблице
-        return False
-
 
 class RecipeShortSerializer(serializers.ModelSerializer):
 
@@ -80,7 +76,9 @@ class RecipeShortSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class UserSubscriptionSerializer(serializers.ModelSerializer):
+class UserSubscriptionSerializer(
+    serializers.ModelSerializer, IsSubscribedMixin
+):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -91,12 +89,6 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             'email', 'id', 'username', 'first_name', 'last_name',
             'is_subscribed', 'recipes', 'recipes_count', 'avatar'
         )
-
-    def get_is_subscribed(self, obj):
-        user = self.context['request'].user
-        if user.is_authenticated:
-            return Subscription.objects.filter(user=user, author=obj).exists()
-        return False
 
     def get_recipes(self, obj):
         recipes_limit = self.context.get('recipes_limit')
@@ -109,12 +101,10 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             recipes, many=True, context=self.context).data
 
     def get_recipes_count(self, obj):
-        # Возвращаем общее количество рецептов у автора
         return Recipe.objects.filter(author=obj).count()
 
 
 class TagSerializer(serializers.ModelSerializer):
-    # Настроить валидатор ^[-a-zA-Z0-9_]+$ для тегов
 
     class Meta:
         model = Tag
@@ -222,7 +212,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        """Переопределение метода update."""
 
         ingredients_data = validated_data.pop('ingredientinrecipe_set')
         tags_data = validated_data.pop('tags', None)
