@@ -21,7 +21,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from api.filters import RecipeFilter
-from api.pagination import UserLimitOffsetPagination
+from api.pagination import RecipesPagination, UserLimitOffsetPagination
 from api.permissions import IsAuthorOrAdmin
 from recipes.models import (
     Favorite,
@@ -198,7 +198,7 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrAdmin]
-    pagination_class = UserLimitOffsetPagination
+    pagination_class = RecipesPagination
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter

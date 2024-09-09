@@ -33,7 +33,6 @@ class CustomUserAdmin(admin.ModelAdmin):
         'email',
         'username'
     )
-    list_filter = ('username',)
     empty_value_display = 'Не задано'
     list_per_page = 10
 
@@ -61,7 +60,6 @@ class IngredientAdmin(admin.ModelAdmin):
     )
     list_editable = ('measurement_unit',)
     search_fields = ('name',)
-    # list_filter = ('name',)
     list_per_page = 20
 
 
@@ -105,7 +103,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'name',
         'author__username'
     )
-    list_filter = ('tags',)  # Не работает, разобраться
+    list_filter = ('tags',)
     empty_value_display = 'Не задано'
     list_per_page = 10
     inlines = (IngredientInRecipeInline,)
