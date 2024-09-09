@@ -77,7 +77,7 @@ class UserViewSet(ModelViewSet):
 
             if not subscription:
                 return Response(
-                    {"detail": "Подписка не найдена."},
+                    {'detail': 'Подписка не найдена.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -86,14 +86,14 @@ class UserViewSet(ModelViewSet):
 
         if target_user == current_user:
             return Response(
-                {"detail": "Нельзя подписаться на самого себя."},
+                {'detail': 'Нельзя подписаться на самого себя.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if Subscription.objects.filter(
                 user=current_user, author=target_user).exists():
             return Response(
-                {"detail": "Вы уже подписаны на этого пользователя."},
+                {'detail': 'Вы уже подписаны на этого пользователя.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -104,7 +104,7 @@ class UserViewSet(ModelViewSet):
             try:
                 recipes_limit = int(recipes_limit)
             except ValueError:
-                raise ParseError("Параметр recipes_limit должен быть числом.")
+                raise ParseError('Параметр recipes_limit должен быть числом.')
 
         context = self.get_serializer_context()
         context['recipes_limit'] = recipes_limit
@@ -126,7 +126,7 @@ class UserViewSet(ModelViewSet):
             try:
                 recipes_limit = int(recipes_limit)
             except ValueError:
-                raise ParseError("Параметр recipes_limit должен быть числом.")
+                raise ParseError('Параметр recipes_limit должен быть числом.')
 
         subscriptions = Subscription.objects.filter(
             user=user).select_related('author')
@@ -316,10 +316,10 @@ class RecipeViewSet(ModelViewSet):
     )
     def get_link(self, request, pk=None):
         recipe = self.get_object()
-        hashid = hashids.Hashids(salt="random_salt", min_length=8)
+        hashid = hashids.Hashids(salt='random_salt', min_length=8)
         short_id = hashid.encode(recipe.id)
         short_link = f'{BASE_URL}/s/{short_id}'
-        return Response({"short-link": short_link})
+        return Response({'short-link': short_link})
 
     @action(
         detail=False,
@@ -333,7 +333,7 @@ class RecipeViewSet(ModelViewSet):
 
         for item in shopping_cart_items:
             recipe = item.recipe
-            for ri in recipe.ingredientinrecipe_set.all():
+            for ri in recipe.ingredient_in_recipes.all():
                 ingredient_name = ri.ingredient.name
                 unit = ri.ingredient.measurement_unit
                 ingredient_totals[ingredient_name]['amount'] += ri.amount
@@ -370,7 +370,7 @@ class IngredientViewSet(ModelViewSet):
 
 
 def redirect_to_recipe(request, short_id):
-    hashid = hashids.Hashids(salt="random_salt", min_length=8)
+    hashid = hashids.Hashids(salt='random_salt', min_length=8)
     decoded_id = hashid.decode(short_id)
 
     if decoded_id:

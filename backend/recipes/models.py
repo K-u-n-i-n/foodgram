@@ -69,7 +69,7 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(
-        max_length=32,
+        max_length=32, unique=True,
         verbose_name='Название'
     )
     slug = models.SlugField(
@@ -101,7 +101,9 @@ class Recipe(models.Model):
         verbose_name='Ингредиенты'
     )
     name = models.CharField(
-        max_length=256, verbose_name='Название'
+        max_length=256,
+        unique=True,
+        verbose_name='Название'
     )
     image = models.ImageField(
         upload_to='recipes', verbose_name='Изображение'
@@ -109,7 +111,7 @@ class Recipe(models.Model):
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(
         validators=[MinValueValidator(1)],
-        help_text="Время приготовления (в минутах)",
+        help_text='Время приготовления (в минутах)',
         verbose_name='Время приготовления'
     )
 
@@ -128,6 +130,7 @@ class IngredientInRecipe(models.Model):
     )
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
+        related_name='ingredient_in_recipes',
         verbose_name='Рецепт'
     )
     amount = models.IntegerField(
@@ -160,7 +163,7 @@ class Favorite(models.Model):
         verbose_name_plural = 'Избранные рецепты'
 
     def __str__(self):
-        return f"{self.user} - {self.recipe}"
+        return f'{self.user} - {self.recipe}'
 
 
 class ShoppingCart(models.Model):

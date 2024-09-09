@@ -24,7 +24,7 @@ class Base64ImageField(serializers.ImageField):
             ext = format.split('/')[-1]
             img_data = base64.b64decode(imgstr)
 
-            file_name = f"{uuid.uuid4()}.{ext}"
+            file_name = f'{uuid.uuid4()}.{ext}'
 
             if not imghdr.what(None, img_data):
                 raise serializers.ValidationError('Неверное изображение')
@@ -140,7 +140,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     cooking_time = serializers.IntegerField(min_value=1)
     image = Base64ImageField(max_length=None, use_url=True)
     ingredients = IngredientInRecipeSerializer(
-        source='ingredientinrecipe_set', many=True
+        source='ingredient_in_recipes', many=True
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True)
@@ -186,7 +186,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
 
-        ingredients = data.get('ingredientinrecipe_set', [])
+        ingredients = data.get('ingredient_in_recipes', [])
         self.validate_ingredients(ingredients)
 
         tags = data.get('tags', [])
@@ -197,7 +197,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         tags = validated_data.pop('tags')
-        ingredients_data = validated_data.pop('ingredientinrecipe_set')
+        ingredients_data = validated_data.pop('ingredient_in_recipes')
 
         recipe = Recipe.objects.create(**validated_data)
 
@@ -213,7 +213,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
 
-        ingredients_data = validated_data.pop('ingredientinrecipe_set')
+        ingredients_data = validated_data.pop('ingredient_in_recipes')
         tags_data = validated_data.pop('tags', None)
 
         if 'image' in validated_data:
