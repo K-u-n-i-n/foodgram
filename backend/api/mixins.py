@@ -2,6 +2,10 @@ from recipes.models import Subscription
 
 
 class IsSubscribedMixin:
+    """
+    Миксин для проверки подписки пользователя на автора.
+    """
+
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
 

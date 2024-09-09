@@ -51,6 +51,10 @@ BASE_URL = os.getenv('BASE_URL', 'http://127.0.0.1:8000')
 
 
 class UserViewSet(ModelViewSet):
+    """
+    ViewSet для управления пользователями.
+    """
+
     permission_classes = (AllowAny,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -164,6 +168,10 @@ class UserSelfView(APIView):
 
 
 class UserAvatarView(APIView):
+    """
+    ViewSet для работы с аватаром.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
@@ -188,6 +196,10 @@ class UserAvatarView(APIView):
 
 
 class TagViewSet(ModelViewSet):
+    """
+    ViewSet для работы с тегами.
+    """
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     http_method_names = ['get']
@@ -195,6 +207,10 @@ class TagViewSet(ModelViewSet):
 
 
 class RecipeViewSet(ModelViewSet):
+    """
+    ViewSet для управления рецептами.
+    """
+
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrAdmin]
@@ -360,6 +376,10 @@ class RecipeViewSet(ModelViewSet):
 
 
 class IngredientViewSet(ModelViewSet):
+    """
+    ViewSet для управления ингредиентами.
+    """
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     http_method_names = ['get']

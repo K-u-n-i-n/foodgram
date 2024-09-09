@@ -18,6 +18,11 @@ from recipes.models import (Favorite,
 
 
 class Base64ImageField(serializers.ImageField):
+    """
+    Поле сериализатора для обработки изображений,
+    закодированных в формате Base64.
+    """
+
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -38,6 +43,10 @@ User = get_user_model()
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для регистрации новых пользователей.
+    """
+
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -59,6 +68,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer, IsSubscribedMixin):
+    """
+    Сериализатор для представления информации о пользователях.
+    """
+
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -70,6 +83,9 @@ class UserSerializer(serializers.ModelSerializer, IsSubscribedMixin):
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для краткого представления рецептов.
+    """
 
     class Meta:
         model = Recipe
@@ -77,8 +93,12 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 
 class UserSubscriptionSerializer(
-    serializers.ModelSerializer, IsSubscribedMixin
-):
+        serializers.ModelSerializer, IsSubscribedMixin):
+    """
+    Сериализатор для отображения информации
+    о подписках пользователя на других авторов.
+    """
+
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -105,6 +125,9 @@ class UserSubscriptionSerializer(
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для работы с тегами.
+    """
 
     class Meta:
         model = Tag
@@ -112,6 +135,10 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class AvatarSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обработки аватара пользователя.
+    """
+
     avatar = Base64ImageField(max_length=None, use_url=True)
 
     class Meta:
@@ -120,6 +147,9 @@ class AvatarSerializer(serializers.ModelSerializer):
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для работы с ингредиентами, использующимися в рецептах.
+    """
 
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(), source='ingredient.id'
@@ -136,6 +166,9 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    """
+    Основной сериализатор для рецептов.
+    """
 
     cooking_time = serializers.IntegerField(min_value=1)
     image = Base64ImageField(max_length=None, use_url=True)
@@ -268,6 +301,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для работы с избранными рецептами.
+    """
 
     class Meta:
         model = Recipe
@@ -275,6 +311,9 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для ингредиентов.
+    """
 
     class Meta:
         model = Ingredient

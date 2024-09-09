@@ -4,6 +4,7 @@ from django.db import models
 
 
 class CustomUser(AbstractUser):
+
     email = models.EmailField(
         unique=True, verbose_name='Электронная почта'
     )
@@ -30,6 +31,7 @@ class CustomUser(AbstractUser):
 
 
 class Subscription(models.Model):
+
     user = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE,
         verbose_name='Подписчик'
@@ -50,6 +52,7 @@ class Subscription(models.Model):
 
 
 class Ingredient(models.Model):
+
     name = models.CharField(
         max_length=128, blank=False,
         null=False, verbose_name='Название'
@@ -68,6 +71,7 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
+
     name = models.CharField(
         max_length=32, unique=True,
         verbose_name='Название'
@@ -86,6 +90,7 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
+
     tags = models.ManyToManyField(
         Tag, related_name='recipes',
         verbose_name='Теги'
@@ -124,6 +129,7 @@ class Recipe(models.Model):
 
 
 class IngredientInRecipe(models.Model):
+
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.CASCADE,
         verbose_name='Ингредиент'
@@ -146,6 +152,7 @@ class IngredientInRecipe(models.Model):
 
 
 class Favorite(models.Model):
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE, related_name='favorites',
@@ -167,6 +174,7 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,

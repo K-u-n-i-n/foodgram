@@ -4,6 +4,10 @@ from recipes.models import Recipe, Tag
 
 
 class RecipeFilter(django_filters.FilterSet):
+    """
+    Определяет параметры фильтрации для рецептов.
+    """
+
     tags = django_filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',

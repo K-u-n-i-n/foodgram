@@ -14,6 +14,7 @@ from .models import (
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
+
     list_display = (
         'email',
         'username',
@@ -39,6 +40,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
+
     list_display = (
         'user',
         'author'
@@ -54,6 +56,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
+
     list_display = (
         'name',
         'measurement_unit'
@@ -65,6 +68,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+
     list_display = (
         'name',
         'slug'
@@ -75,6 +79,7 @@ class TagAdmin(admin.ModelAdmin):
 
 
 class IngredientInRecipeInline(admin.TabularInline):
+
     model = IngredientInRecipe
     extra = 1
     fields = ('ingredient', 'amount')
@@ -82,6 +87,7 @@ class IngredientInRecipeInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+
     list_display = (
         'name',
         'author',
@@ -120,6 +126,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
+
     list_display = ('user', 'recipe')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user', 'recipe')
@@ -127,6 +134,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
+
     list_display = ('user', 'recipe')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user', 'recipe')
