@@ -1,11 +1,12 @@
-from collections import defaultdict
 import csv
-from io import StringIO
-import os
-
 import hashids
-from django.http import HttpResponse
+import os
+from collections import defaultdict
+from io import StringIO
+
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from dotenv import load_dotenv, find_dotenv
 from rest_framework import filters, status
@@ -20,6 +21,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from api.filters import RecipeFilter
+from api.pagination import UserLimitOffsetPagination
 from api.permissions import IsAuthorOrAdmin
 from recipes.models import (
     Favorite,
@@ -52,6 +54,7 @@ class UserViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    pagination_class = UserLimitOffsetPagination
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -153,6 +156,7 @@ class UserSelfView(APIView):
     """
 
     permission_classes = (IsAuthenticated,)
+    pagination_class = UserLimitOffsetPagination
 
     def get(self, request):
         serializer = UserSerializer(request.user)
@@ -194,6 +198,7 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrAdmin]
+    pagination_class = UserLimitOffsetPagination
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -212,15 +217,22 @@ class RecipeViewSet(ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data)
 
-    # Избыточен, добавление в закладки
-    def partial_update(self, request, *args, **kwargs):
-        return self.update(request, *args, partial=True, **kwargs)
-
     def get_queryset(self):
         queryset = super().get_queryset()
-        user = self.request.user       
+        user = self.request.user
+
         if 'is_favorited' in self.request.query_params:
-            queryset = queryset.filter(favorited_by__user=user)
+            if user.is_authenticated:
+                queryset = queryset.filter(favorited_by__user=user)
+            else:
+                return queryset.none()
+
+        if 'is_in_shopping_cart' in self.request.query_params:
+            if user.is_authenticated:
+                queryset = queryset.filter(shopping_cart__user=user)
+            else:
+                return queryset.none()
+
         return queryset
 
     @action(
@@ -312,27 +324,6 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=False,
         methods=['get'],
-        url_path='resolve-link/(?P<short_id>[^/.]+)'
-    )
-    def resolve_link(self, request, short_id):
-        hashid = hashids.Hashids(salt="random_salt", min_length=8)
-        decoded = hashid.decode(short_id)
-        if not decoded:
-            return Response({"error": "Invalid short link"}, status=400)
-
-        recipe_id = decoded[0]
-        recipe = Recipe.objects.filter(id=recipe_id).first()
-        if not recipe:
-            return Response({"error": "Recipe not found"}, status=404)
-        return Response(
-            {"id": recipe.id,
-             "name": recipe.name,
-             "description": recipe.description}
-        )
-
-    @action(
-        detail=False,
-        methods=['get'],
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
@@ -349,6 +340,8 @@ class RecipeViewSet(ModelViewSet):
                 ingredient_totals[ingredient_name]['unit'] = unit
 
         output = StringIO()
+        output.write('\ufeff')
+
         writer = csv.writer(output)
         writer.writerow(['Ингредиенты', 'Количество'])
 
@@ -357,7 +350,9 @@ class RecipeViewSet(ModelViewSet):
             unit = data['unit']
             writer.writerow([f'{ingredient} ({unit})', f'{amount}'])
 
-        response = HttpResponse(output.getvalue(), content_type='text/csv')
+        response = HttpResponse(
+            output.getvalue(), content_type='text/csv; charset=utf-8'
+        )
         response['Content-Disposition'] = (
             'attachment; filename="shopping_cart.csv"'
         )
@@ -372,3 +367,15 @@ class IngredientViewSet(ModelViewSet):
     pagination_class = None
     filterset_fields = ('name',)
     search_fields = ('^name',)
+
+
+def redirect_to_recipe(request, short_id):
+    hashid = hashids.Hashids(salt="random_salt", min_length=8)
+    decoded_id = hashid.decode(short_id)
+
+    if decoded_id:
+        recipe_id = decoded_id[0]
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        return redirect('recipe-detail', pk=recipe.id)
+    else:
+        return HttpResponseNotFound('Recipe not found')
