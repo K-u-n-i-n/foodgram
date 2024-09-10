@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from api.filters import RecipeFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import RecipesPagination, UserLimitOffsetPagination
 from api.permissions import IsAuthorOrAdmin
 from recipes.models import (
@@ -385,7 +385,7 @@ class IngredientViewSet(ModelViewSet):
     http_method_names = ['get']
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     pagination_class = None
-    filterset_fields = ('name',)
+    filterset_class = IngredientFilter
     search_fields = ('^name',)
 
 

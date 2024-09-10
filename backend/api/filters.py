@@ -1,23 +1,23 @@
-import django_filters
+from django_filters import rest_framework as filters
 
-from recipes.models import Recipe, Tag
+from recipes.models import Ingredient, Recipe, Tag
 
 
-class RecipeFilter(django_filters.FilterSet):
+class RecipeFilter(filters.FilterSet):
     """
     Определяет параметры фильтрации для рецептов.
     """
 
-    tags = django_filters.ModelMultipleChoiceFilter(
+    tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all(),
         conjoined=False
     )
-    is_favorited = django_filters.BooleanFilter(
+    is_favorited = filters.BooleanFilter(
         method='filter_is_favorited'
     )
-    is_in_shopping_cart = django_filters.BooleanFilter(
+    is_in_shopping_cart = filters.BooleanFilter(
         method='filter_is_in_shopping_cart'
     )
 
@@ -36,3 +36,15 @@ class RecipeFilter(django_filters.FilterSet):
         if value:
             return queryset.filter(shopping_cart__user=user)
         return queryset
+
+
+class IngredientFilter(filters.FilterSet):
+    """
+    Определяет параметры фильтрации для ингредиентов.
+    """
+
+    name = filters.CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']

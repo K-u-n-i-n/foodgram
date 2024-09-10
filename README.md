@@ -1,4 +1,4 @@
-https://foodgram-lipetsk.ddns.net/docs/ — спецификация API.
+https://foodgram-lipetsk.ddns.net/api/docs/ — спецификация API.
 
-http://localhost/api/docs/ — спецификация API для отладки.
 
+https://foodgram-lipetsk.ddns.net/ - веб-приложение «Фудграм»
