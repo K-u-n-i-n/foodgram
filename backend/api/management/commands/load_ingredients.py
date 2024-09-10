@@ -1,7 +1,6 @@
 import csv
 import os
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from recipes.models import Ingredient
@@ -11,10 +10,7 @@ class Command(BaseCommand):
     help = 'Загрузка ингредиентов в базу данных из CSV-файла'
 
     def handle(self, *args, **kwargs):
-        # file_path = os.path.join(
-        #     settings.BASE_DIR, '..', 'data', 'ingredients.csv'
-        # )
-        # Используем абсолютный путь к файлу в контейнере
+
         file_path = os.path.join('/app/data', 'ingredients.csv')
 
         try:
