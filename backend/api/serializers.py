@@ -184,22 +184,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         if not tags:
             raise serializers.ValidationError('Поле не должно быть пустым.')
 
-        tag_names = [tag.name for tag in tags]
-        if len(tag_names) != len(set(tag_names)):
+        tag_ids = [tag.id for tag in tags]
+        if len(tag_ids) != len(set(tag_ids)):
             raise serializers.ValidationError(
                 'Список тегов содержит дубликаты.')
 
         return tags
-
-    def validate(self, data):
-
-        ingredients = data.get('ingredient_in_recipes', [])
-        self.validate_ingredients(ingredients)
-
-        tags = data.get('tags', [])
-        self.validate_tags(tags)
-
-        return data
 
     def create(self, validated_data):
 
