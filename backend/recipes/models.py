@@ -43,7 +43,12 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'author')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name='unique_subscription',
+            )
+        ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
@@ -145,7 +150,12 @@ class IngredientInRecipe(models.Model):
     )
 
     class Meta:
-        unique_together = ('ingredient', 'recipe')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('ingredient', 'recipe'),
+                name='unique_ingredient_in_recipe',
+            )
+        ]
 
     def __str__(self):
         return f'{self.ingredient.name} в {self.recipe.name}'
@@ -165,7 +175,12 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'recipe')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_favorite',
+            )
+        ]
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные рецепты'
 
@@ -188,7 +203,12 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'recipe')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_shopping_cart',
+            )
+        ]
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзины'
 
