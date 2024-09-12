@@ -20,7 +20,7 @@ urlpatterns = [
         'users/me/avatar/', views.UserAvatarView.as_view(), name='user-avatar'
     ),
     path(
-        'users/me/', views.UserSelfView.as_view()
+        'users/me/', views.UserSelfView.as_view(), name='user-self'
     ),
     path(
         'users/set_password/',
