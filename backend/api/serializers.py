@@ -191,64 +191,42 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return tags
 
-    def create(self, validated_data):
+    def _process_ingredients(self, recipe, ingredients_data):
 
-        tags = validated_data.pop('tags')
-        ingredients_data = validated_data.pop('ingredient_in_recipes')
+        recipe.ingredients.clear()
 
-        recipe = Recipe.objects.create(**validated_data)
-
-        for ingredient_data in ingredients_data:
-            IngredientInRecipe.objects.create(
+        ingredient_instances = [
+            IngredientInRecipe(
                 recipe=recipe,
                 ingredient=ingredient_data['ingredient']['id'],
                 amount=ingredient_data['amount']
             )
+            for ingredient_data in ingredients_data
+        ]
+        IngredientInRecipe.objects.bulk_create(ingredient_instances)
 
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients_data = validated_data.pop('ingredient_in_recipes')
+
+        recipe = Recipe.objects.create(**validated_data)
+        self._process_ingredients(recipe, ingredients_data)
         recipe.tags.set(tags)
+
         return recipe
 
     def update(self, instance, validated_data):
-
-        ingredients_data = validated_data.pop('ingredient_in_recipes')
         tags_data = validated_data.pop('tags', None)
+        ingredients_data = validated_data.pop('ingredient_in_recipes', None)
 
-        if 'image' in validated_data:
-            instance.image = validated_data.get('image', instance.image)
-
-        instance.name = validated_data.get('name', instance.name)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time)
-        instance.text = validated_data.get('text', instance.text)
-        instance.save()
+        instance = super().update(instance, validated_data)
 
         if tags_data is not None:
             instance.tags.set(tags_data)
 
         if ingredients_data is not None:
-            new_ingredients = []
+            self._process_ingredients(instance, ingredients_data)
 
-            for ingredient_data in ingredients_data:
-                ingredient_obj = ingredient_data.get('ingredient')
-                ingredient_instance = ingredient_obj.get(
-                    'id') if ingredient_obj else None
-                ingredient_id = (
-                    ingredient_instance.id if ingredient_instance else None
-                )
-                amount = ingredient_data.get('amount')
-
-                if ingredient_id is not None:
-                    new_ingredients.append((ingredient_id, amount))
-
-            if new_ingredients:
-                instance.ingredients.clear()
-
-                for ingredient_id, amount in new_ingredients:
-                    IngredientInRecipe.objects.create(
-                        recipe=instance,
-                        ingredient_id=ingredient_id,
-                        amount=amount
-                    )
         return instance
 
     def get_is_favorited(self, obj):
