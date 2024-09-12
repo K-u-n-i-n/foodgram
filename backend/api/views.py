@@ -1,12 +1,12 @@
 import csv
 import hashids
-import os
 from collections import defaultdict
 from io import StringIO
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse, HttpResponseNotFound
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from dotenv import load_dotenv, find_dotenv
 from rest_framework import filters, status
@@ -46,8 +46,6 @@ from .serializers import (
 User = get_user_model()
 
 load_dotenv(find_dotenv())
-
-BASE_URL = os.getenv('BASE_URL', 'http://127.0.0.1:8000')
 
 
 class UserViewSet(ModelViewSet):
@@ -222,35 +220,6 @@ class RecipeViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def update(self, request, *args, **kwargs):
-
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
-
-        if 'is_favorited' in self.request.query_params:
-            if user.is_authenticated:
-                queryset = queryset.filter(favorited_by__user=user)
-            else:
-                return queryset.none()
-
-        if 'is_in_shopping_cart' in self.request.query_params:
-            if user.is_authenticated:
-                queryset = queryset.filter(shopping_cart__user=user)
-            else:
-                return queryset.none()
-
-        return queryset
-
     @action(
         detail=True,
         methods=['post', 'delete'],
@@ -266,8 +235,9 @@ class RecipeViewSet(ModelViewSet):
             )
 
             if not created:
-                raise ValidationError(
-                    {'detail': 'Рецепт уже есть в избранном'}
+                return Response(
+                    {'detail': 'Рецепт уже есть в избранном'},
+                    status=status.HTTP_409_CONFLICT
                 )
 
             recipe_data = FavoriteSerializer(
@@ -275,18 +245,17 @@ class RecipeViewSet(ModelViewSet):
             ).data
             return Response(recipe_data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
-            favorite = Favorite.objects.filter(
-                user=user, recipe=recipe).first()
+        favorite = Favorite.objects.filter(
+            user=user, recipe=recipe).first()
 
-            if not favorite:
-                return Response(
-                    {'detail': 'Рецепт не найден в избранном'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        if not favorite:
+            return Response(
+                {'detail': 'Рецепт не найден в избранном'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-            favorite.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -334,7 +303,7 @@ class RecipeViewSet(ModelViewSet):
         recipe = self.get_object()
         hashid = hashids.Hashids(salt='random_salt', min_length=8)
         short_id = hashid.encode(recipe.id)
-        short_link = f'{BASE_URL}/s/{short_id}'
+        short_link = f'{settings.BASE_URL}/s/{short_id}'
         return Response({'short-link': short_link})
 
     @action(
@@ -395,7 +364,6 @@ def redirect_to_recipe(request, short_id):
 
     if decoded_id:
         recipe_id = decoded_id[0]
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-        return redirect('recipe-detail', pk=recipe.id)
-    else:
-        return HttpResponseNotFound('Recipe not found')
+        return redirect(f'/recipes/{recipe_id}/')
+
+    return HttpResponseNotFound('Рецепт не найден')
