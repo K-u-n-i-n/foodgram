@@ -85,14 +85,21 @@ class UserSubscriptionSerializer(
         )
 
     def get_recipes(self, obj):
+
         recipes_limit = self.context.get('recipes_limit')
-        recipes = Recipe.objects.filter(author=obj)
 
         if recipes_limit is not None:
+            try:
+                recipes_limit = int(recipes_limit)
+            except ValueError:
+                raise serializers.ValidationError(
+                    'recipes_limit должен быть числом.')
+
+        recipes = Recipe.objects.filter(author=obj)
+        if recipes_limit:
             recipes = recipes[:recipes_limit]
 
-        return RecipeShortSerializer(
-            recipes, many=True, context=self.context).data
+        return RecipeShortSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
@@ -118,6 +125,14 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar']
+
+    # def validate(self, data):
+
+    #     if 'avatar' not in data:
+    #         raise serializers.ValidationError(
+    #             {'avatar': 'Это поле обязательно для заполнения.'}
+    #         )
+    #     return data
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -242,9 +257,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
+class FavoriteShoppingCartSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для работы с избранными рецептами.
+    Сериализатор для работы с избранными рецептами и корзиной.
     """
 
     class Meta:

@@ -11,7 +11,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from dotenv import load_dotenv, find_dotenv
 from rest_framework import filters, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError, ParseError
 from rest_framework.permissions import (AllowAny,
                                         IsAuthenticated,
                                         IsAuthenticatedOrReadOnly
@@ -23,6 +22,7 @@ from rest_framework.viewsets import ModelViewSet
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import RecipesPagination, UserLimitOffsetPagination
 from api.permissions import IsAuthorOrAdmin
+from api.mixins import RecipeActionMixin
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -33,7 +33,7 @@ from recipes.models import (
 )
 from .serializers import (
     AvatarSerializer,
-    FavoriteSerializer,
+    FavoriteShoppingCartSerializer,
     IngredientSerializer,
     RecipeSerializer,
     TagSerializer,
@@ -101,15 +101,8 @@ class UserViewSet(ModelViewSet):
 
         Subscription.objects.create(user=current_user, author=target_user)
 
-        recipes_limit = request.query_params.get('recipes_limit')
-        if recipes_limit is not None:
-            try:
-                recipes_limit = int(recipes_limit)
-            except ValueError:
-                raise ParseError('Параметр recipes_limit должен быть числом.')
-
         context = self.get_serializer_context()
-        context['recipes_limit'] = recipes_limit
+        context['recipes_limit'] = request.query_params.get('recipes_limit')
 
         user_data = UserSubscriptionSerializer(
             target_user, context=context).data
@@ -118,33 +111,28 @@ class UserViewSet(ModelViewSet):
     @action(
         detail=False,
         methods=['get'],
-        url_path='subscriptions'
+        url_path='subscriptions',
+        permission_classes=[IsAuthenticated]
     )
     def subscriptions(self, request):
         user = request.user
+        author_ids = Subscription.objects.filter(
+            user=user).values_list('author', flat=True)
 
-        recipes_limit = request.query_params.get('recipes_limit')
-        if recipes_limit is not None:
-            try:
-                recipes_limit = int(recipes_limit)
-            except ValueError:
-                raise ParseError('Параметр recipes_limit должен быть числом.')
+        authors = User.objects.filter(id__in=author_ids)
 
-        subscriptions = Subscription.objects.filter(
-            user=user).select_related('author')
-        authors = [subscription.author for subscription in subscriptions]
+        context = self.get_serializer_context()
+        context['recipes_limit'] = request.query_params.get('recipes_limit')
 
         page = self.paginate_queryset(authors)
         if page is not None:
             serializer = UserSubscriptionSerializer(
-                page, many=True,
-                context={'request': request, 'recipes_limit': recipes_limit}
+                page, many=True, context=context
             )
             return self.get_paginated_response(serializer.data)
 
         serializer = UserSubscriptionSerializer(
-            authors, many=True,
-            context={'request': request, 'recipes_limit': recipes_limit}
+            authors, many=True, context=context
         )
         return Response(serializer.data)
 
@@ -176,11 +164,6 @@ class UserAvatarView(APIView):
         user = request.user
         serializer = AvatarSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        if 'avatar' not in request.data:
-            return Response(
-                {'avatar': 'Это поле обязательно для заполнения.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         serializer.save()
 
         return Response({
@@ -204,7 +187,7 @@ class TagViewSet(ModelViewSet):
     pagination_class = None
 
 
-class RecipeViewSet(ModelViewSet):
+class RecipeViewSet(ModelViewSet, RecipeActionMixin):
     """
     ViewSet для управления рецептами.
     """
@@ -226,36 +209,9 @@ class RecipeViewSet(ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk=None):
-        recipe = self.get_object()
-        user = request.user
-
-        if request.method == 'POST':
-            favorite, created = Favorite.objects.get_or_create(
-                user=user, recipe=recipe
-            )
-
-            if not created:
-                return Response(
-                    {'detail': 'Рецепт уже есть в избранном'},
-                    status=status.HTTP_409_CONFLICT
-                )
-
-            recipe_data = FavoriteSerializer(
-                recipe, context={'request': request}
-            ).data
-            return Response(recipe_data, status=status.HTTP_201_CREATED)
-
-        favorite = Favorite.objects.filter(
-            user=user, recipe=recipe).first()
-
-        if not favorite:
-            return Response(
-                {'detail': 'Рецепт не найден в избранном'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        favorite.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.check_recipe_action(
+            request, Favorite, FavoriteShoppingCartSerializer
+        )
 
     @action(
         detail=True,
@@ -263,36 +219,9 @@ class RecipeViewSet(ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def shopping_cart(self, request, pk=None):
-        recipe = self.get_object()
-        user = request.user
-
-        if request.method == 'POST':
-            shopping_cart, created = ShoppingCart.objects.get_or_create(
-                user=user, recipe=recipe
-            )
-
-            if not created:
-                raise ValidationError(
-                    {'detail': 'Рецепт уже находится в корзине покупок'}
-                )
-
-            recipe_data = FavoriteSerializer(
-                recipe, context={'request': request}
-            ).data
-            return Response(recipe_data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            shopping_cart = ShoppingCart.objects.filter(
-                user=user, recipe=recipe).first()
-
-            if not shopping_cart:
-                return Response(
-                    {'detail': 'Рецепт не найден в корзине покупок'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            shopping_cart.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.check_recipe_action(
+            request, ShoppingCart, FavoriteShoppingCartSerializer
+        )
 
     @action(
         detail=True,
