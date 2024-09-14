@@ -126,13 +126,13 @@ class AvatarSerializer(serializers.ModelSerializer):
         model = User
         fields = ['avatar']
 
-    # def validate(self, data):
+    def validate(self, data):
 
-    #     if 'avatar' not in data:
-    #         raise serializers.ValidationError(
-    #             {'avatar': 'Это поле обязательно для заполнения.'}
-    #         )
-    #     return data
+        if 'avatar' not in data:
+            raise serializers.ValidationError(
+                {'avatar': 'Это поле обязательно для заполнения.'}
+            )
+        return data
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -182,6 +182,22 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance.author).data
 
         return representation
+
+    def validate(self, data):
+        request = self.context.get('request')
+
+        if request and request.method == 'PATCH':
+
+            if 'tags' not in data:
+                raise serializers.ValidationError({
+                    'tags': 'Поле tags обязательно.'
+                })
+            if 'ingredient_in_recipes' not in data:
+                raise serializers.ValidationError({
+                    'ingredients': 'Поле ingredients обязательно.'
+                })
+
+        return data
 
     def validate_ingredients(self, ingredients):
         if not ingredients:
