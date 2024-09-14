@@ -179,7 +179,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         representation['tags'] = TagSerializer(
             instance.tags.all(), many=True).data
         representation['author'] = UserSerializer(
-            instance.author).data
+            instance.author, context=self.context
+        ).data
 
         return representation
 
