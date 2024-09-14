@@ -39,7 +39,7 @@ class RecipeActionMixin:
             if not created:
                 return Response(
                     {'detail': 'Такой рецепт уже присутствует'},
-                    status=status.HTTP_409_CONFLICT
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
             data = serializer_class(recipe, context={'request': request}).data

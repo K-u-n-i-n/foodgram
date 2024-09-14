@@ -1,10 +1,10 @@
 import csv
 import hashids
-from collections import defaultdict
 from io import StringIO
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
 from django_filters.rest_framework import DjangoFilterBackend
@@ -20,12 +20,13 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from api.filters import IngredientFilter, RecipeFilter
-from api.pagination import RecipesPagination, UserLimitOffsetPagination
+from api.pagination import CustomPagination
 from api.permissions import IsAuthorOrAdmin
 from api.mixins import RecipeActionMixin
 from recipes.models import (
     Favorite,
     Ingredient,
+    IngredientInRecipe,
     Recipe,
     ShoppingCart,
     Subscription,
@@ -56,7 +57,7 @@ class UserViewSet(ModelViewSet):
     permission_classes = (AllowAny,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    pagination_class = UserLimitOffsetPagination
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -146,7 +147,7 @@ class UserSelfView(APIView):
     """
 
     permission_classes = (IsAuthenticated,)
-    pagination_class = UserLimitOffsetPagination
+    pagination_class = CustomPagination
 
     def get(self, request):
         serializer = UserSerializer(request.user)
@@ -195,7 +196,7 @@ class RecipeViewSet(ModelViewSet, RecipeActionMixin):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrAdmin]
-    pagination_class = RecipesPagination
+    pagination_class = CustomPagination
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -242,16 +243,13 @@ class RecipeViewSet(ModelViewSet, RecipeActionMixin):
     )
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_cart_items = ShoppingCart.objects.filter(user=user)
-        ingredient_totals = defaultdict(lambda: {'amount': 0, 'unit': ''})
-
-        for item in shopping_cart_items:
-            recipe = item.recipe
-            for ri in recipe.ingredient_in_recipes.all():
-                ingredient_name = ri.ingredient.name
-                unit = ri.ingredient.measurement_unit
-                ingredient_totals[ingredient_name]['amount'] += ri.amount
-                ingredient_totals[ingredient_name]['unit'] = unit
+        ingredients = (
+            IngredientInRecipe.objects
+            .filter(recipe__in_shopping_cart__user=user)
+            .values('ingredient__name', 'ingredient__measurement_unit')
+            .annotate(total_amount=Sum('amount'))
+            .order_by('ingredient__name')
+        )
 
         output = StringIO()
         output.write('\ufeff')
@@ -259,10 +257,11 @@ class RecipeViewSet(ModelViewSet, RecipeActionMixin):
         writer = csv.writer(output)
         writer.writerow(['Ингредиенты', 'Количество'])
 
-        for ingredient, data in ingredient_totals.items():
-            amount = data['amount']
-            unit = data['unit']
-            writer.writerow([f'{ingredient} ({unit})', f'{amount}'])
+        for ingredient in ingredients:
+            name = ingredient['ingredient__name']
+            unit = ingredient['ingredient__measurement_unit']
+            total_amount = ingredient['total_amount']
+            writer.writerow([f'{name} ({unit})', total_amount])
 
         response = HttpResponse(
             output.getvalue(), content_type='text/csv; charset=utf-8'
