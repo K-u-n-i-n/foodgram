@@ -8,7 +8,6 @@ from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
 from django_filters.rest_framework import DjangoFilterBackend
-from dotenv import load_dotenv, find_dotenv
 from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny,
@@ -45,8 +44,6 @@ from .serializers import (
 
 
 User = get_user_model()
-
-load_dotenv(find_dotenv())
 
 
 class UserViewSet(ModelViewSet):
