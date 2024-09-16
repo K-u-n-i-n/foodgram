@@ -1,4 +1,4 @@
-# ![alt text](frontend\src\images\logo-header.png)
+# ![alt text](frontend/src/images/logo-header.png)
 
 **Продуктовый помощник (Foodrgam)** - мой дипломный проект.  
 Проект представляет собой онлайн-сервис и API для него.
