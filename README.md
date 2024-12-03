@@ -12,7 +12,8 @@
 
 
 ---
-**Сервер временно недоступен**  
+**Сервер временно недоступен** 
+ 
 Ознакомится с проектом можно здесь:  [Foodrgam](https://foodgram-lipetsk.ddns.net/recipes)  
 Спецификация API: [ReDoc](https://foodgram-lipetsk.ddns.net/api/docs/)
 
