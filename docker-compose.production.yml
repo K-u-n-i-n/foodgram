@@ -12,6 +12,7 @@ services:
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
+    restart: always
     
   backend:
     image: kuninav/foodgram_backend
@@ -20,6 +21,7 @@ services:
       - static:/backend_static
       - media:/app/media
       - ./data:/app/data
+    restart: always
 
   frontend:
     image: kuninav/foodgram_frontend   
@@ -27,6 +29,7 @@ services:
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
+    restart: always
 
   gateway:
     image: kuninav/foodgram_gateway   
@@ -37,3 +40,4 @@ services:
       - static:/staticfiles
       - media:/app/media:ro
       - ./docs:/usr/share/nginx/html/api/docs/
+    restart: always
