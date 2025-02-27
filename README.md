@@ -43,6 +43,7 @@
 - Выполните миграции: `docker compose -f docker-compose.yml exec backend python manage.py migrate`.
 - Создайте суперюзера: `docker compose -f docker-compose.yml exec backend python manage.py createsuperuser`.
 - Соберите статику: `docker compose -f docker-compose.yml exec backend python manage.py collectstatic`.
+- Скопируйте статику: `docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/`
 - Заполните базу ингредиентами: `docker compose -f docker-compose.yml exec backend python manage.py load_ingredients`.
 - Зайдите в админку и создайте теги для рецептов.
   
