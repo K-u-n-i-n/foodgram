@@ -13,8 +13,6 @@
 
 ---
 
-Ознакомится с проектом можно здесь:  [Foodrgam](https://foodgram.kunin.su/recipes)  
-Спецификация API: [ReDoc](https://foodgram.kunin.su/api/docs/)
 
 [![Main Foodgram workflow](https://github.com/K-u-n-i-n/foodgram/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/K-u-n-i-n/foodgram/actions/workflows/main.yml)
 
